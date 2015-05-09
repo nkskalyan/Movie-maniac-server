@@ -1,1 +1,6 @@
 Flask==0.10.1
+pymongo
+simplejson==3.6.5
+tmdb3
+Flask-SQLAlchemy==1.0
+SQLAlchemy==0.9.4
