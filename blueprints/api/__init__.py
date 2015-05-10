@@ -1,8 +1,7 @@
 import movieService
 import simplejson as json
 from flask import Blueprint, request, jsonify, Response
-from models import db, User, Review, Movie
-import models
+
 from bson.json_util import dumps
 
 api = Blueprint('api',__name__)
