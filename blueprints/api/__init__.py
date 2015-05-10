@@ -2,6 +2,7 @@ import movieService
 import simplejson as json
 from flask import Blueprint, request, jsonify, Response
 from models import db, User, Review, Movie
+import models
 from bson.json_util import dumps
 
 api = Blueprint('api',__name__)
@@ -11,7 +12,10 @@ api = Blueprint('api',__name__)
 @api.route('/movies/search/<searchKey>')
 def searchMovies(searchKey):
   a = (movieService.findMovieByKeyword(searchKey))
-  responseJson = map(dictToJson, a)
+  if a:
+    responseJson = map(dictToJson, a)
+  else:
+    responseJson = {}
   return Response(dumps(responseJson), mimetype='application/json')
 
 @api.route('/movie/<int:id>')
@@ -23,12 +27,17 @@ def getMovieById(id):
 @api.route('/user/<userMail>', methods = ["GET"])
 def getUserById(userMail):
   user = User.query.filter_by(email_address=userMail).first()
+  a= User.query.filter_by(id=5)
+  if not user:
+    return Response("",mimetype='application/json')
+  print a.__dict__
   print user.__dict__
   userStorage = user.__dict__
   result = {}
   result['email_address'] = userStorage['email_address']
   result['name'] =userStorage['name']
   result['id'] = userStorage['id']
+  result['dp'] = userStorage['dp']
   return Response(dumps(result), mimetype='application/json')
 
 # /api/user/1/movie/268/review
@@ -45,21 +54,17 @@ def addReview(userId, movieId):
 
 @api.route('/user/<int:userId>/watchList/<int:movieId>', methods=["POST"])
 def addToWatchList(userId, movieId):
-  postData = request.data
-  postBody = json.loads(postData)
-  watchList = WatchList(userId, movieId)
+  watchList = models.Watchlist(userId, movieId)
   db.session.add(watchList)
   db.session.commit()
-  return Response(dumps(postData), mimetype='application/json')
+  return Response(dumps({}), mimetype='application/json')
 
 @api.route('/user/<int:userId>/wishList/<int:movieId>', methods=["POST"])
 def addToWishList(userId, movieId):
-  postData = request.data
-  postBody = json.loads(postData)
-  wishList = WishList(userId, movieId)
+  wishList = models.Wishlist(userId, movieId)
   db.session.add(wishList)
   db.session.commit()
-  return Response(dumps(postData), mimetype='application/json')
+  return Response(dumps({}), mimetype='application/json')
 
 @api.route('/user/<int:userId>/reviews', methods = ["GET"])
 def getReviewsByUserId(userId):
@@ -78,8 +83,15 @@ def getReviewsByMovieId(movieId):
 def dictToJson(movieDict):
   data = movieDict['_data']
   finalDict = data
-  finalDict['poster_path'] = "http://image.tmdb.org/t/p/w500/"+data['poster_path']['_data']['file_path']
-  return finalDict
+  try:
+     data['poster_path']
+  except Exception as e:
+    pass
+  else:
+    finalDict['poster_path'] = "http://image.tmdb.org/t/p/w500/"+data['poster_path']['_data']['file_path']
+  finally:
+     return finalDict
+
 
 def reviewToResult(review):
   reviewDict = review.__dict__

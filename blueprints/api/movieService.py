@@ -11,40 +11,45 @@ db = client['MoviesDB']
 movies = db['Movies']
 
 def findMovieById(mId):
-	try:
-		searchResults = movies.find({"_data.id": mId})
-		#Return searchResults.toList or something equivalent
-		return list(searchResults)
-		##for movie in searchResults:
-		##	print movie 
-		"""
-		request = Request('https://api.themoviedb.org/3/movie/'+mId+'?api_key='+api_key)
-		movies.insert_one(); ///to be continued"""
-	except pymongo.errors.PyMongoError as e:
-		print "ERROR: ",e	
+  try:
+    searchResults = movies.find({"_data.id": mId})
+    #Return searchResults.toList or something equivalent
+    return list(searchResults)
+    ##for movie in searchResults:
+    ##  print movie
+    """
+    request = Request('https://api.themoviedb.org/3/movie/'+mId+'?api_key='+api_key)
+    movies.insert_one(); ///to be continued"""
+  except pymongo.errors.PyMongoError as e:
+    print "ERROR: ",e
 
 def findMovieByKeyword(keyword):
-	try:
-		#Use search array
-                keyword = keyword.lower()
-                regx = re.compile(keyword, re.IGNORECASE)
+  try:
+    #Use search array
+    keyword = keyword.lower()
+    regx = re.compile(keyword, re.IGNORECASE)
 
-                searchResults = movies.find({'search_key': {'$regex':keyword}}) #{$regex:/keyword/i}})
-                #print list(searchResults)
-                return list(searchResults)
-	except pymongo.errors.PyMongoError as e:
-		print "ERROR: ",e
+    searchResults = movies.find({'search_key': {'$regex':keyword}}) #{$regex:/keyword/i}})
+    #print list(searchResults)
+    result = list(searchResults)
+    if len(result) == 0:
+      insertIntoDB(keyword)
+      searchResults = movies.find({'search_key': {'$regex':keyword}}) #{$regex:/keyword/i}})
+      result = list(searchResults)
+    return result
+  except pymongo.errors.PyMongoError as e:
+    print "ERROR: ",e
 
 def insertIntoDB(keyword):
-        keyword = keyword.lower()
-	try:
-		searchResults = tmdb3.searchMovie(keyword)
-		for searchItem in searchResults:
-			jsonMovieData = toRecursiveDict(searchItem.__dict__)
-			jsonMovieData['search_key'] = keyword
-			movies.insert_one(jsonMovieData)
-	except pymongo.errors.PyMongoError as e:
-                print "ERROR: ",e
+  keyword = keyword.lower()
+  try:
+    searchResults = tmdb3.searchMovie(keyword)
+    for searchItem in searchResults:
+      jsonMovieData = toRecursiveDict(searchItem.__dict__)
+      jsonMovieData['search_key'] = keyword
+      movies.insert_one(jsonMovieData)
+  except pymongo.errors.PyMongoError as e:
+    print "ERROR: ",e
 
 def toRecursiveDict(obj):
         a = {}
@@ -61,10 +66,10 @@ def toRecursiveDict(obj):
                                 a[key]=toRecursiveDict(obj[key])
                         else:
                                 a[key] = obj[key]
-                else:   
+                else:
                         a[key] = obj[key]
         return a
 
 if __name__=='__main__':
-##	insertIntoDB("lord of the rings")
-	print findMovieById(155)
+##  insertIntoDB("lord of the rings")
+  print findMovieById(155)
