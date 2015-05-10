@@ -1,7 +1,8 @@
 import movieService
 import simplejson as json
 from flask import Blueprint, request, jsonify, Response
-
+from models import db, User, Review, Movie
+import models
 from bson.json_util import dumps
 
 api = Blueprint('api',__name__)
@@ -27,10 +28,11 @@ def getMovieById(id):
 def getUserById(userMail):
   user = User.query.filter_by(email_address=userMail).first()
   a= User.query.filter_by(id=5)
+  # print User.all()
   if not user:
     return Response("",mimetype='application/json')
   print a.__dict__
-  print user.__dict__
+  # print user.__dict__
   userStorage = user.__dict__
   result = {}
   result['email_address'] = userStorage['email_address']
@@ -100,3 +102,29 @@ def reviewToResult(review):
   reviewResult['description'] = reviewDict['description']
   reviewResult['rating'] = reviewDict['rating']
   return reviewResult
+
+def getWishlist(userid):
+  wishlist = Wishlist.query.filter_by(userId=userid)
+  wishlist = [w for w in wishlist]
+  wishlistResult = map(wishToResult, wishlist)
+  return Response(dumps(wishlistResult), mimetype='application/json')
+
+def wishToResult(wishlist):
+  wishlistDict = wishlist.__dict__
+  wishlistResult = {}
+  wishlistResult['userId'] = wishlistDict['userId']
+  wishlistResult['movieId'] = wishlistDict['movieId']
+  return wishlistResult
+
+def getWatchlist(userid):
+  watchlist = Watchlist.query.filter_by(userId=userid)
+  watchlist = [w for w in watchlist]
+  watchlistResult = map(watchToResult, watchlist)
+  return Response(dumps(watchlistResult), mimetype='application/json')
+
+def watchToResult(watchlist):
+  watchlistDict = watchlist.__dict__
+  watchlistResult = {}
+  watchlistResult['userId'] = watchlistDict['userId']
+  watchlistResult['movieId'] = watchlistDict['movieId']
+  return watchlistResult
